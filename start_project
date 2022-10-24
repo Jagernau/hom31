@@ -1,0 +1,24 @@
+#!/bin/bash
+python3 -m virtualenv env
+source env/bin/activate
+pip install -r req.txt
+
+
+sudo docker network create \
+  --driver=bridge \
+  --subnet=172.28.0.0/16 \
+  --ip-range=172.28.5.0/24 \
+  --gateway=172.28.5.254 \
+  django_network
+
+sudo docker run --name django_db --network django_network -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+
+sleep 4
+./manage.py makemigrations
+./manage.py migrate
+./manage.py loaddata locations.json
+./manage.py loaddata users.json
+./manage.py loaddata categories.json
+./manage.py loaddata ads.json
+pytest
+./manage.py runserver
